@@ -7,5 +7,12 @@
     "express": "^4.17.1",
     "node": "^12.6.0",
     "socket.io": "^2.2.0"
+  },
+  "scripts": {
+    "start": "pm2 start ./server.js --name 'back'",
+    "restart": "pm2 restart back",
+    "stop": "pm2 stop back",
+    "clean": "pm2 delete back",
+    "start:clean": "yarn clean && yarn start"
   }
 }
