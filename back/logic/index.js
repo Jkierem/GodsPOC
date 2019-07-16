@@ -21,9 +21,22 @@ const createTile = (state = FREE, owner = NONE) => ({ state, owner })
 const createOccupiedTile = (who) => createTile(OCCUPIED, who);
 const EmptyTile = createTile();
 
+const prop = (att) => (obj) => obj ? obj[att] : undefined
+const createLens = att => (obj, value) => {
+    if (value !== undefined) {
+        obj ? obj[att] = value : void 0;
+    } else {
+        return prop(att)(obj);
+    }
+}
+
 const createBoard = ({ rows, cols }) => {
     const board = new Graph(NodeFactory, Strategy);
     const nf = NodeFactory;
+    const Row = prop("row");
+    const Col = prop("col");
+    const State = prop("state");
+    const Value = createLens("value");
     const getNodeKey = (row, col) => `${row},${col}`;
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
@@ -38,19 +51,19 @@ const createBoard = ({ rows, cols }) => {
         getTiles: () => board.getAllNodes(),
         getWalls: () => board.getAllEdges(),
         isTileOccupied: (row, col) => {
-            return board.getNode(getNodeKey(row, col)).state === OCCUPIED;
+            return State(board.getNode(getNodeKey(row, col))) === OCCUPIED;
         },
         getTile: (row, col) => {
             return board.getNode(getNodeKey(row, col))
         },
         setTile: (row, col, value = EmptyTile) => {
-            board.getNode(getNodeKey(row, col)).value = value;
+            Value(board.getNode(getNodeKey(row, col)), value);
         },
         toggleWall: (_from, _to) => {
-            const from = getNodeKey(_from.row, _from.col)
-            const to = getNodeKey(_to.row, _to.col)
+            const from = getNodeKey(Row(_from), Col(_from))
+            const to = getNodeKey(Row(_to), Col(_to))
             if (board.hasEdge(from, to)) {
-                board.getEdge(from, to).value == FREE ?
+                Value(board.getEdge(from, to)) == FREE ?
                     board.addEdge(from, to, WALL) :
                     board.addEdge(from, to, FREE)
             } else {
@@ -58,11 +71,11 @@ const createBoard = ({ rows, cols }) => {
             }
         },
         canMove: (_from, _to) => {
-            const from = getNodeKey(_from.row, _from.col)
-            const to = getNodeKey(_to.row, _to.col)
+            const from = getNodeKey(Row(_from), Col(_from))
+            const to = getNodeKey(Row(_to), Col(_to))
             if (board.hasEdge(from, to)) {
-                return board.getEdge(from, to) == FREE
-                    && board.getNode(to).state == FREE;
+                return Value(board.getEdge(from, to)) == FREE
+                    && State(board.getNode(to)) == FREE;
             }
             return true;
         }
@@ -92,18 +105,19 @@ const createCornerPicker = (rows, cols) => {
 const createUserManager = ({ rows, cols }) => {
     let users = []
     const picker = createCornerPicker(rows, cols)
+    const Position = createLens("position")
     return {
         addUser: (type) => {
             const newUser = createUser(users.length, type);
             users = [...users, newUser]
             if (type == PEASANT) {
-                newUser.position = picker();
+                Position(newUser, picker());
             }
             return newUser;
         },
         getUsers: () => [...users],
-        setUserPosition: (id, pos) => { users[id].position = pos },
-        getUserPosition: (id) => users[id].position,
+        setUserPosition: (id, pos) => { Position(users[id], pos) },
+        getUserPosition: (id) => Position(users[id]),
     }
 }
 
@@ -122,6 +136,12 @@ const movePosition = (pos, dir) => {
     return newPos;
 }
 
+const isBetween = (start, end) => (value) => start <= value && value < end
+
+const createValidator = ({ rows, cols }) => ({ row, col }) => {
+    return isBetween(0, rows)(row) && isBetween(0, cols)(col)
+}
+
 const createOperation = (result, status) => ({
     result,
     status,
@@ -134,32 +154,35 @@ const createSystem = ({
 }) => {
     const board = createBoard(boardSize);
     const userManager = createUserManager(boardSize)
+    const isValid = createValidator(boardSize)
     return {
         getState: () => {
-            return {
+            return Success({
                 tiles: board.getTiles(),
                 walls: board.getWalls(),
                 players: userManager.getUsers()
-            }
+            })
         },
         move(_who, dir) {
-            const who = _who.id ? _who.id : _who;
+            const who = _who.id !== undefined ? _who.id : _who;
             const curr = userManager.getUserPosition(who);
             const newPos = movePosition(curr, dir);
-            if (board.canMove(curr, newPos)) {
+            if (board.canMove(curr, newPos) && isValid(newPos)) {
                 userManager.setUserPosition(who, newPos);
                 board.setTile(curr.row, curr.col, EmptyTile);
                 board.setTile(newPos.row, newPos.col, createOccupiedTile(who));
                 return this.getState();
+            } else {
+                return Failure(this.getState().result);
             }
         },
         toggleWall(from, to) {
             board.toggleWall(from, to);
-            return this.getState()
+            return Success(this.getState())
         },
         addPlayer(type) {
-            return userManager.addUser(type);
-        },
+            return Success(userManager.addUser(type))
+        }
     }
 }
 

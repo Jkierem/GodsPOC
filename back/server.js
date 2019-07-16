@@ -10,27 +10,28 @@ app.get('/', function (req, res) {
     res.json("HELLO")
 });
 
+const settings = {
+    boardSize: {
+        rows: 20,
+        cols: 20,
+    }
+}
+const sys = createSystem(settings)
+
 const room = io
     .of("/game")
     .on('connection', function (socket) {
         console.log("CONNECTION!!!!")
-        socket.on('role', function (data) {
-            room.emit("message", data)
+        socket.on("role", (type) => {
+            socket.emit("player", sys.addPlayer(type));
+            room.emit("state", sys.getState())
         })
-        socket.on('disconnect', () => { console.log("SOMEONE DISCONNECTED") })
-    })
 
-const settings = {
-    boardSize: {
-        rows: 3,
-        cols: 3,
-    }
-}
-const sys = createSystem(settings)
-const from = { row: 0, col: 0 }
-const to = { row: 1, col: 0 };
-sys.board.toggleWall(from, to);
-sys.board.setTile(0, 0, 5)
-console.log(sys.board.getTiles())
-console.log(sys.board.getWalls())
-console.log(sys.board.canMove(from, to))
+        socket.on("move", (who, dir) => {
+            room.emit("state", sys.move(who, dir));
+        })
+
+        socket.on("wall", (from, to) => {
+            room.emit("state", sys.toggleWall(from, to));
+        })
+    })
