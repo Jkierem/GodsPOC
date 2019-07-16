@@ -106,11 +106,13 @@ const createUserManager = ({ rows, cols }) => {
     let users = []
     const picker = createCornerPicker(rows, cols)
     const Position = createLens("position")
+    let autoId = -1;
     return {
         addUser: (type) => {
-            const newUser = createUser(users.length, type);
+            autoId++;
+            const newUser = createUser(autoId, type);
             users = [...users, newUser]
-            if (type == PEASANT) {
+            if (type.toUpperCase() == PEASANT) {
                 Position(newUser, picker());
             }
             return newUser;
@@ -118,6 +120,10 @@ const createUserManager = ({ rows, cols }) => {
         getUsers: () => [...users],
         setUserPosition: (id, pos) => { Position(users[id], pos) },
         getUserPosition: (id) => Position(users[id]),
+        kill: (_who) => {
+            const who = _who.id !== undefined ? _who.id : _who;
+            users = users.filter(x => x.id !== who);
+        }
     }
 }
 
@@ -182,6 +188,12 @@ const createSystem = ({
         },
         addPlayer(type) {
             return Success(userManager.addUser(type))
+        },
+        getSize() {
+            return Success(boardSize)
+        },
+        kill(who) {
+            userManager.kill(who)
         }
     }
 }

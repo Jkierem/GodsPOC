@@ -1,4 +1,4 @@
-export const IO_SERVER = "http://localhost/message";
+export const IO_SERVER = "http://localhost:8080/game";
 const Constants = {
     IO_SERVER,
 }

@@ -5,8 +5,9 @@ const Splash = (props) => {
   return (
     <React.Fragment>
       Splash
-      <button onClick={() => setPage(pages.Emitter)}>Go to Emitter</button>
-      <button onClick={() => setPage(pages.Receiver)}>Go to Receiver</button>
+      <button onClick={() => setPage(pages.God)}>Become a God</button>
+      <button onClick={() => setPage(pages.Peasant)}>Become a Peasan</button>
+      <button onClick={() => setPage(pages.Spectator)}>Just watch</button>
     </React.Fragment>
   )
 }

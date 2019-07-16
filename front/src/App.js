@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { default as SplashView } from "./Splash";
-import { default as EmitterView } from './Emitter';
-import { default as ReceiverView } from './Receiver';
+import { default as BoardView } from "./Board";
 
 const JustOf = (value) => () => value
 const dimensions = (width, height) => `
@@ -25,21 +24,24 @@ const AppContainer = styled.div`
 `
 
 const Splash = "Spash";
-const Emitter = "Emitter";
-const Receiver = "Receiver";
+const God = "God";
+const Peasant = "Peasant";
+const Spectator = "Spectator"
 
 const View = (page, setter) => {
   const pages = {
-    Splash, Emitter, Receiver
+    Splash, God, Peasant, Spectator
   }
   const props = { pages, setPage: setter }
   switch (page) {
     case Splash:
       return <SplashView {...props} />
-    case Emitter:
-      return <EmitterView {...props} />
-    case Receiver:
-      return <ReceiverView {...props} />
+    case God:
+      return <BoardView {...props} type={God} />
+    case Peasant:
+      return <BoardView {...props} type={Peasant} />
+    case Spectator:
+      return <BoardView {...props} type={Spectator} />
     default:
       return <SplashView {...props} />
   }
