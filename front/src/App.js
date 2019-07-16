@@ -2,19 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { default as SplashView } from "./Splash";
 import { default as BoardView } from "./Board";
-
-const JustOf = (value) => () => value
-const dimensions = (width, height) => `
-  width: ${width};
-  height: ${height};
-`
-const fullSize = JustOf(dimensions("100vw", "100vh"))
-const flex = JustOf("display: flex;");
-const flexPosition = (main = "center", cross = "center") => `
-    justify-content: ${main};
-    align-items: ${cross};
-`
-const centerFlex = JustOf(flexPosition())
+import { flex, fullSize, centerFlex } from './Utils';
 
 const AppContainer = styled.div`
   ${flex}
