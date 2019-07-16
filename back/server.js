@@ -54,6 +54,7 @@ const room = io
 
         socket.on("kill", (who) => {
             eventLog(`KILL ${who.id || who}`)
+            console.log(`Killing payload: `, who)
             sys.kill(who)
             room.emit("state", sys.getState())
         })

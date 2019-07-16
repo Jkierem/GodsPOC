@@ -3,13 +3,21 @@ import io from 'socket.io-client'
 import { IO_SERVER } from '../constants';
 
 let socket = io(IO_SERVER)
+let playerId = undefined
 
 const Board = (props) => {
   const { type, setPage, pages } = props
 
   const [gameState, setGameState] = useState({});
   const [player, setPlayer] = useState({});
+
   useEffect(() => {
+
+    window.onbeforeunload = () => {
+      socket.removeAllListeners()
+      socket.emit("kill", playerId);
+    }
+
     socket.emit("size", (data) => {
       console.log("SIZE:", data)
     })
@@ -21,11 +29,14 @@ const Board = (props) => {
 
     socket.emit("role", type, (data) => {
       console.log("PLAYER:", data)
+      playerId = data.result.id;
       setPlayer(data.result)
     })
 
     return () => {
       socket.removeAllListeners();
+      window.onbeforeunload = () => { }
+      playerId = undefined
     }
   }, [type])
 
