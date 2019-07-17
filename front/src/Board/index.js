@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import styled from 'styled-components';
 import io from 'socket.io-client'
 import { IO_SERVER } from '../constants';
-import { flex, centerFlex, fullSize } from '../Utils'
+import { flex, centerFlex, fullSize, partition } from '../Utils'
 
 let socket = io(IO_SERVER)
 let playerId = undefined
@@ -17,8 +17,10 @@ const generateTemplate = (amount) => {
 
 const Tile = styled.div`
   ${flex}
-  ${fullSize}
   ${centerFlex}
+  box-sizing: border-box;
+  border-color: 1px solid black;
+  background-color: ${props => props.wall ? "black" : "white"};
 `
 const BoardGrid = styled.div`
   display: grid;
@@ -26,12 +28,43 @@ const BoardGrid = styled.div`
   grid-template-columns: ${({ cols }) => generateTemplate(cols)};
   height: 90vh;
   width: 90vw;
+  position: relative;
 `
+
+const wallRow = (amount, prefix) => {
+  const tiles = []
+  for (let i = 0; i < amount; i++) {
+    tiles.push(<Tile key={`${prefix}-${i}-rowwall`} wall></Tile>)
+  }
+  return tiles;
+}
+
+const renderTiles = (gameState, boardSize) => {
+  const { rows, cols } = boardSize;
+  const { tiles } = gameState;
+  return partition(tiles, cols).map((row, index) => {
+    const elements = row.map(({ key, value }, index) => {
+      if (index === 0) {
+        return <Tile key={key}></Tile>
+      } else {
+        return <React.Fragment>
+          <Tile wall key={`wall${key}`}></Tile>
+          <Tile key={key}></Tile>
+        </React.Fragment>
+      }
+    });
+    if (index !== 0) {
+      return [...wallRow((2 * cols) - 1, index), ...elements];
+    }
+    return elements;
+  })
+
+}
 
 const Board = (props) => {
   const { type, setPage, pages } = props
 
-  const [gameState, setGameState] = useState({});
+  const [gameState, setGameState] = useState(false);
   const [player, setPlayer] = useState({});
   const [size, setSize] = useState({ rows: 10, cols: 10 });
 
@@ -44,6 +77,7 @@ const Board = (props) => {
 
     socket.emit("size", (data) => {
       console.log("SIZE:", data)
+      setSize(data.result)
     })
 
     socket.on("state", (data) => {
@@ -66,8 +100,14 @@ const Board = (props) => {
 
   return (
     <div>
-      <BoardGrid {...size}>
-      </BoardGrid>
+      {
+        !gameState ?
+          <div>Loading...</div>
+          :
+          <BoardGrid {...size}>
+            {renderTiles(gameState, size)}
+          </BoardGrid>
+      }
       <button onClick={() => {
         socket.emit("kill", player)
         setPage(pages.Splash)

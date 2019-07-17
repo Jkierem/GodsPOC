@@ -16,6 +16,7 @@ const FAILURE = false;
 const GOD = 'GOD';
 const PEASANT = 'PEASANT';
 const SPECTATOR = 'SPECTATOR';
+const ENEMY = 'ENEMY';
 
 const createTile = (state = FREE, owner = NONE) => ({ state, owner })
 const createOccupiedTile = (who) => createTile(OCCUPIED, who);

@@ -1,4 +1,13 @@
 export const JustOf = (value) => () => value
+export const partition = (arr, part) => {
+  return arr.reduce((acc, next, index) => {
+    if (index % part === 0) {
+      acc = [...acc, []]
+    }
+    acc[acc.length - 1].push(next);
+    return acc;
+  }, [])
+}
 
 export const dimensions = (width, height) => `
   width: ${width};

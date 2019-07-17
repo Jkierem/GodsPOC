@@ -1,4 +1,5 @@
 cd back 
-yarn start:clean
+yarn clean
+yarn start
 cd ../front
 yarn start 
