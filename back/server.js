@@ -14,8 +14,8 @@ const eventLog = (event) => console.log(`Received ${event} event`)
 
 const settings = {
     boardSize: {
-        rows: 10,
-        cols: 10,
+        rows: 20,
+        cols: 20,
     }
 }
 const sys = createSystem(settings)
@@ -36,14 +36,11 @@ const room = io
             room.emit("state", sys.getState())
         })
 
-        socket.on("move", (who, dir, ack) => {
+        socket.on("move", (who, dir) => {
             eventLog("MOVE")
             const res = sys.move(who, dir);
             if (res.status) {
-                ack(true)
                 room.emit("state", res);
-            } else {
-                ack(false)
             }
         })
 
@@ -54,7 +51,6 @@ const room = io
 
         socket.on("kill", (who) => {
             eventLog(`KILL ${who.id || who}`)
-            console.log(`Killing payload: `, who)
             sys.kill(who)
             room.emit("state", sys.getState())
         })

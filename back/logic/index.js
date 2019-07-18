@@ -52,10 +52,10 @@ const createBoard = ({ rows, cols }) => {
         getTiles: () => board.getAllNodes(),
         getWalls: () => board.getAllEdges(),
         isTileOccupied: (row, col) => {
-            return State(board.getNode(getNodeKey(row, col))) === OCCUPIED;
+            return State(Value(board.getNode(getNodeKey(row, col)))) === OCCUPIED;
         },
         getTile: (row, col) => {
-            return board.getNode(getNodeKey(row, col))
+            return Value(board.getNode(getNodeKey(row, col)))
         },
         setTile: (row, col, value = EmptyTile) => {
             Value(board.getNode(getNodeKey(row, col)), value);
@@ -64,22 +64,22 @@ const createBoard = ({ rows, cols }) => {
             const from = getNodeKey(Row(_from), Col(_from))
             const to = getNodeKey(Row(_to), Col(_to))
             if (board.hasEdge(from, to)) {
-                Value(board.getEdge(from, to)) == FREE ?
+                board.getEdge(from, to) == FREE ?
                     board.addEdge(from, to, WALL) :
                     board.addEdge(from, to, FREE)
             } else {
                 board.addEdge(from, to, WALL);
             }
         },
-        canMove: (_from, _to) => {
+        canMove(_from, _to) {
             const from = getNodeKey(Row(_from), Col(_from))
             const to = getNodeKey(Row(_to), Col(_to))
             if (board.hasEdge(from, to)) {
-                return Value(board.getEdge(from, to)) == FREE
-                    && State(board.getNode(to)) == FREE;
+                return board.getEdge(from, to) == FREE
+                    && State(Value(board.getNode(to))) === FREE;
             }
-            return true;
-        }
+            return State(Value(board.getNode(to))) === FREE;
+        },
     }
 }
 
@@ -107,11 +107,11 @@ const createUserManager = ({ rows, cols }) => {
     let users = []
     const picker = createCornerPicker(rows, cols)
     const Position = createLens("position")
-    let autoId = -1;
+    let autoId = 0;
     return {
         addUser: (type) => {
             autoId++;
-            const newUser = createUser(autoId, type);
+            const newUser = createUser(autoId, type.toUpperCase());
             users = [...users, newUser]
             if (type.toUpperCase() == PEASANT) {
                 Position(newUser, picker());
@@ -119,12 +119,12 @@ const createUserManager = ({ rows, cols }) => {
             return newUser;
         },
         getUsers: () => [...users],
-        setUserPosition: (id, pos) => { Position(users[id], pos) },
-        getUserPosition: (id) => Position(users[id]),
-        kill: (_who) => {
-            const who = _who.id !== undefined ? _who.id : _who;
-            users = users.filter(x => x.id !== who);
-        }
+        setUserPosition: (id, pos) => { Position(users.find(u => u.id === id), pos) },
+        getUserPosition: (id) => Position(users.find(u => u.id === id)),
+        findUser: (whoId) => users.find(user => user.id === whoId),
+        kill: (whoId) => {
+            users = users.filter(x => x.id !== whoId);
+        },
     }
 }
 
@@ -185,16 +185,28 @@ const createSystem = ({
         },
         toggleWall(from, to) {
             board.toggleWall(from, to);
-            return Success(this.getState())
+            return this.getState()
         },
         addPlayer(type) {
-            return Success(userManager.addUser(type))
+            const user = userManager.addUser(type);
+            if (type.toUpperCase() === PEASANT) {
+                const { position: { row, col }, id } = user;
+                board.setTile(row, col, createOccupiedTile(id))
+            }
+            return Success(user)
         },
         getSize() {
             return Success(boardSize)
         },
-        kill(who) {
-            userManager.kill(who)
+        kill(_who) {
+            const who = _who.id !== undefined ? _who : userManager.findUser(_who);
+            userManager.kill(who.id)
+            console.log(who)
+            if (who.type === PEASANT) {
+                console.log("PEASANT KILLED: ", who.position)
+                const { row, col } = who.position;
+                board.setTile(row, col, EmptyTile)
+            }
         }
     }
 }

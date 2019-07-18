@@ -12,9 +12,9 @@ const AppContainer = styled.div`
 `
 
 const Splash = "Spash";
-const God = "God";
-const Peasant = "Peasant";
-const Spectator = "Spectator"
+const God = "GOD";
+const Peasant = "PEASANT";
+const Spectator = "SPECTATOR"
 
 const View = (page, setter) => {
   const pages = {
