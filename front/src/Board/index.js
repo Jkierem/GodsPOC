@@ -180,7 +180,7 @@ const Board = (props) => {
           </BoardGrid>
       }
       <button onClick={() => {
-        socket.emit("kill", player)
+        socket.emit("kill", player.id)
         setPage(pages.Splash)
       }}>Go Back</button>
       <p>You are player number {player.id}</p>

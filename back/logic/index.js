@@ -119,7 +119,9 @@ const createUserManager = ({ rows, cols }) => {
             return newUser;
         },
         getUsers: () => [...users],
-        setUserPosition: (id, pos) => { Position(users.find(u => u.id === id), pos) },
+        setUserPosition: (id, pos) => {
+            Position(users.find(u => u.id === id), pos);
+        },
         getUserPosition: (id) => Position(users.find(u => u.id === id)),
         findUser: (whoId) => users.find(user => user.id === whoId),
         kill: (whoId) => {
@@ -201,12 +203,12 @@ const createSystem = ({
         kill(_who) {
             const who = _who.id !== undefined ? _who : userManager.findUser(_who);
             userManager.kill(who.id)
-            console.log(who)
             if (who.type === PEASANT) {
                 console.log("PEASANT KILLED: ", who.position)
                 const { row, col } = who.position;
-                board.setTile(row, col, EmptyTile)
+                board.setTile(row, col, createTile())
             }
+            return this.getState()
         }
     }
 }
