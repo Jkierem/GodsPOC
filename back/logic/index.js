@@ -23,7 +23,7 @@ const createOccupiedTile = (who) => createTile(OCCUPIED, who);
 const EmptyTile = createTile();
 
 const prop = (att) => (obj) => obj ? obj[att] : undefined
-const createLens = att => (obj, value) => {
+const createGetSet = att => (obj, value) => {
     if (value !== undefined) {
         obj ? obj[att] = value : void 0;
     } else {
@@ -37,7 +37,8 @@ const createBoard = ({ rows, cols }) => {
     const Row = prop("row");
     const Col = prop("col");
     const State = prop("state");
-    const Value = createLens("value");
+    const Value = createGetSet("value");
+    const StateOfValue = (obj) => State(Value(obj))
     const getNodeKey = (row, col) => `${row},${col}`;
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
@@ -52,7 +53,7 @@ const createBoard = ({ rows, cols }) => {
         getTiles: () => board.getAllNodes(),
         getWalls: () => board.getAllEdges(),
         isTileOccupied: (row, col) => {
-            return State(Value(board.getNode(getNodeKey(row, col)))) === OCCUPIED;
+            return StateOfValue(board.getNode(getNodeKey(row, col))) === OCCUPIED;
         },
         getTile: (row, col) => {
             return Value(board.getNode(getNodeKey(row, col)))
@@ -106,7 +107,7 @@ const createCornerPicker = (rows, cols) => {
 const createUserManager = ({ rows, cols }) => {
     let users = []
     const picker = createCornerPicker(rows, cols)
-    const Position = createLens("position")
+    const Position = createGetSet("position")
     let autoId = 0;
     return {
         addUser: (type) => {
@@ -117,6 +118,9 @@ const createUserManager = ({ rows, cols }) => {
                 Position(newUser, picker());
             }
             return newUser;
+        },
+        createEnemy(){
+            this.addUser(ENEMY);
         },
         getUsers: () => [...users],
         setUserPosition: (id, pos) => {
